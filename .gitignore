@@ -1,0 +1,15 @@
+gitignore
+# CMake构建目录（这是最重要的）
+build/
+out/
+cmake/
+
+# IDE文件
+.vs/
+.vscode/
+.idea/
+*.sln
+*.vcxproj*
+
+# 系统文件
+.DS_Store
