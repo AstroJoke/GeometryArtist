@@ -3,6 +3,8 @@ gitignore
 build/
 out/
 cmake/
+bin/
+
 
 # IDE文件
 .vs/
