@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Geometry_artist_mainwindow</class>
+ <widget class="QMainWindow" name="Geometry_artist_mainwindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Geometry Artist</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionChangeTarget"/>
+    <addaction name="actionChangeTool"/>
+    <addaction name="separator"/>
+    <addaction name="actionExportTarget"/>
+    <addaction name="actionExportTool"/>
+    <addaction name="separator"/>
+    <addaction name="actionExportReport"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <widget class="QMenu" name="menuTrait">
+     <property name="title">
+      <string>Trait</string>
+     </property>
+     <addaction name="actionadd_circle"/>
+     <addaction name="actionAdd_Arc"/>
+     <addaction name="separator"/>
+     <addaction name="actionfrom_script"/>
+    </widget>
+    <addaction name="actionDoboolean"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset"/>
+    <addaction name="actionToolColor"/>
+    <addaction name="actionTargetColor"/>
+    <addaction name="separator"/>
+    <addaction name="actionRedo"/>
+    <addaction name="actionUndo"/>
+    <addaction name="separator"/>
+    <addaction name="menuTrait"/>
+    <addaction name="separator"/>
+    <addaction name="actionSetStep"/>
+    <addaction name="separator"/>
+    <addaction name="actionSubdivideMesh"/>
+    <addaction name="actionMergeMeshes"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuChooseShader">
+     <property name="title">
+      <string>Shader</string>
+     </property>
+     <addaction name="actionFlatShading"/>
+     <addaction name="actionGouraudShading"/>
+    </widget>
+    <addaction name="actionShowNormals"/>
+    <addaction name="actionWireFrame"/>
+    <addaction name="actionShowNormalMap"/>
+    <addaction name="separator"/>
+    <addaction name="menuChooseShader"/>
+   </widget>
+   <widget class="QMenu" name="menuTransform">
+    <property name="title">
+     <string>Transform</string>
+    </property>
+    <addaction name="actionRotate"/>
+    <addaction name="actionTranslate"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTransform"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionopen_file">
+   <property name="text">
+    <string>open file</string>
+   </property>
+  </action>
+  <action name="actionReset">
+   <property name="text">
+    <string>Reset</string>
+   </property>
+  </action>
+  <action name="actionChangeTarget">
+   <property name="text">
+    <string>Import Target</string>
+   </property>
+  </action>
+  <action name="actionChangeTool">
+   <property name="text">
+    <string>Import Tool</string>
+   </property>
+  </action>
+  <action name="actionToolColor">
+   <property name="text">
+    <string>Tool Color</string>
+   </property>
+  </action>
+  <action name="actionTargetColor">
+   <property name="text">
+    <string>Target Color</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionShowNormals">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Normals</string>
+   </property>
+  </action>
+  <action name="actionShowNormalMap">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Normal Map</string>
+   </property>
+  </action>
+  <action name="actionadd_circle">
+   <property name="text">
+    <string>Add Circle</string>
+   </property>
+  </action>
+  <action name="actionAdd_Arc">
+   <property name="text">
+    <string>Add Arc</string>
+   </property>
+  </action>
+  <action name="actionFlatShading">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Flat Shading</string>
+   </property>
+  </action>
+  <action name="actionGouraudShading">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Gouraud Shading</string>
+   </property>
+  </action>
+  <action name="actionWireFrame">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wire Frame</string>
+   </property>
+  </action>
+  <action name="actionSetStep">
+   <property name="text">
+    <string>Set Step</string>
+   </property>
+  </action>
+  <action name="actionDoboolean">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Do Boolean</string>
+   </property>
+  </action>
+  <action name="actionRotate">
+   <property name="text">
+    <string>Rotate</string>
+   </property>
+  </action>
+  <action name="actionTranslate">
+   <property name="text">
+    <string>Translate</string>
+   </property>
+  </action>
+  <action name="actionfrom_script">
+   <property name="text">
+    <string>From Script</string>
+   </property>
+  </action>
+  <action name="actionSubdivideMesh">
+   <property name="text">
+    <string>Subdivide Mesh</string>
+   </property>
+  </action>
+  <action name="actionExportTarget">
+   <property name="text">
+    <string>Export Target</string>
+   </property>
+  </action>
+  <action name="actionExportTool">
+   <property name="text">
+    <string>Export Tool</string>
+   </property>
+  </action>
+  <action name="actionMergeMeshes">
+   <property name="text">
+    <string>Merge Meshes</string>
+   </property>
+  </action>
+  <action name="actionExportReport">
+   <property name="text">
+    <string>Export Report</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
