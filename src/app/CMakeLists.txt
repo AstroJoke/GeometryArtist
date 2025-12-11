@@ -2,22 +2,30 @@ cmake_minimum_required(VERSION 3.20)
 
 project(GeometryArtist_Main)
 
-set(CMAKE_AUTOMOC ON)
-
-file(GLOB APP_SOURCES 
-    "src/*.cpp"
+file(GLOB_RECURSE APP_SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx"
 )
 
-file(GLOB APP_HEADERS 
-    "include/*.h"
+file(GLOB_RECURSE APP_HEADERS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
-file(GLOB APP_UI_FILES 
-    "form/*.ui"
+file(GLOB_RECURSE APP_UI_FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui/*.ui"
 )
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS 
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui/main_window"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui/dialogs"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui/widgets"
+)
+
+message("=== UI Configuration ===")
+message(STATUS "CMAKE_AUTOUIC: ${CMAKE_AUTOUIC}")
+message(STATUS "UI Files found: ${APP_UI_FILES}")
 
 add_executable(GeometryArtist_Main
     main.cpp
@@ -26,20 +34,8 @@ add_executable(GeometryArtist_Main
     ${APP_UI_FILES}
 )
 
-set_target_properties(GeometryArtist_Main PROPERTIES
-    DEBUG_POSTFIX "_d"
-    AUTOMOC ON
-    AUTORCC ON
-    AUTOUIC ON
-)
-
-target_include_directories(GeometryArtist_Main
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
 target_link_libraries(GeometryArtist_Main
-        PRIVATE
+    PRIVATE
         Qt6::Core
         Qt6::Widgets
         Qt6::Xml
@@ -49,12 +45,34 @@ target_link_libraries(GeometryArtist_Main
         Qt6::OpenGLWidgets
 )
 
+target_include_directories(GeometryArtist_Main
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${UI_GENERATED_DIR}"
+        "${MOC_GENERATED_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/GeometryArtist_Main_autogen/include_$<CONFIG>"
+)
+
+set_target_properties(GeometryArtist_Main PROPERTIES
+    DEBUG_POSTFIX "_d"
+    AUTOUIC_OUTPUT_DIRECTORY "${UI_GENERATED_DIR}"
+    AUTOMOC_OUTPUT_DIRECTORY "${MOC_GENERATED_DIR}"
+    AUTORCC_OUTPUT_DIRECTORY "${GENERATED_DIR}/qrc"
+)
+
+target_compile_definitions(GeometryArtist_Main
+    PRIVATE
+    $<$<CONFIG:Debug>:ENABLE_OPENGL_DEBUG=1>
+    $<$<NOT:$<CONFIG:Debug>>:ENABLE_OPENGL_DEBUG=0>
+)
+
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
 
     source_group("Source Files" FILES main.cpp)
     
     if(APP_SOURCES)
-        source_group("Source Files\\core" FILES ${APP_SOURCES})
+        source_group("Source Files" FILES ${APP_SOURCES})
     endif()
     
     if(APP_HEADERS)
@@ -66,23 +84,12 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     endif()
     
     source_group("Generated Files" REGULAR_EXPRESSION ".*autogen.*")
-    source_group("Generated Files\\moc" REGULAR_EXPRESSION ".*/moc_.*\\.cpp$|.*/moc_.*\\.cxx$")
-    source_group("Generated Files\\ui" REGULAR_EXPRESSION ".*/ui_.*\\.h$|.*/ui_.*\\.hpp$")
-    source_group("Generated Files\\qrc" REGULAR_EXPRESSION ".*/qrc_.*\\.cpp$|.*/qrc_.*\\.cxx$")
+    source_group("Generated Files\\moc" REGULAR_EXPRESSION ".*[\\/]+moc_.*\\.(cpp|cxx)$")
+    source_group("Generated Files\\ui" REGULAR_EXPRESSION ".*[\\/]+ui_.*\\.(h|hpp)$")
+    source_group("Generated Files\\qrc" REGULAR_EXPRESSION ".*[\\/]+qrc_.*\\.(cpp|cxx)$")
     
-    # 设置解决方案文件夹
     set_target_properties(GeometryArtist_Main PROPERTIES
         FOLDER "Applications"
-        VS_STARTUP_PROJECT "TRUE"
+        VS_STARTUP_PROJECT GeometryArtist_Main
     )
 endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(GeometryArtist_Main
-        PRIVATE
-        ENABLE_OPENGL_DEBUG = 1)
-else()
-    target_compile_definitions(GeometryArtist_Main
-        PRIVATE
-        ENABLE_OPENGL_DEBUG = 0)
-endif() 

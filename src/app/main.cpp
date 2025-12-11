@@ -1,8 +1,3 @@
-#include <QApplication>
-#include <QSurfaceFormat>
-#include <QOpenGLContext>
-#include <QOffscreenSurface>
-
 #ifdef _WIN32
 #include <tchar.h>
 #include <Windows.h>
@@ -61,6 +56,15 @@ void EnableAutoDump(bool bEnable)
 }
 #endif
 
+#include <memory>
+
+#include <QApplication>
+#include <QSurfaceFormat>
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+
+#include "geometry_artist_main.h"
+
 bool checkOpenGLVersion(int major, int minor)
 {
 	QOpenGLContext context;
@@ -85,7 +89,13 @@ int main(int argc, char* argv[])
 	EnableAutoDump(true);
 #endif 
 
+	QApplication app(argc, argv);
+
+	app.setApplicationName("GeometryArtist");
+	app.setApplicationVersion("0.1.0");
+
 	QSurfaceFormat fmt;
+	fmt.setRenderableType(QSurfaceFormat::OpenGL);
 
 	// try Core Profile 4.3
 	if (checkOpenGLVersion(4, 3)) {
@@ -113,15 +123,9 @@ int main(int argc, char* argv[])
 	fmt.setSamples(sampleCount);
 	QSurfaceFormat::setDefaultFormat(fmt);
 
-	QApplication app(argc, argv);
+	std::unique_ptr<geomart::GeometryArtistMain> ptrMainWindow = 
+		std::make_unique<geomart::GeometryArtistMain>();
+	ptrMainWindow->show();
 
-	app.setApplicationName("GeometryArtist");
-	app.setApplicationVersion("0.1.0");
-	
-	QApplication a(argc, argv);
-	//CBooleanDemoMainWindow* ptrMainWindow = new CBooleanDemoMainWindow();
-	//ptrMainWindow->show();
-
-	a.exec();
-	return 0;
+	return app.exec();
 }
