@@ -1,32 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(GeometryArtist_Main)
+project(ga_scene)
 
-file(GLOB_RECURSE APP_SOURCES 
-    "src/*.cpp"
-    "src/*.cxx"
+file(GLOB_RECURSE SCENE_SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx"
 )
 
-file(GLOB_RECURSE APP_HEADERS
-    "include/*.h"
-    "include/*.hpp"
+file(GLOB_RECURSE SCENE_HEADERS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
-file(GLOB_RECURSE APP_UI_FILES 
+file(GLOB_RECURSE SCENE_UI_FILES 
     "${CMAKE_CURRENT_SOURCE_DIR}/ui/*.ui"
 )
 
-add_executable(${PROJECT_NAME}
-    main.cpp
-    ${APP_SOURCES}
-    ${APP_HEADERS}
-    ${APP_UI_FILES}
+add_library(${PROJECT_NAME}
+    ${SCENE_SOURCES}
+    ${SCENE_HEADERS}
+    ${SCENE_UI_FILES}
     # *.qrc files can be added here if any
 )
-
-message("=== UI Configuration ===")
-message(STATUS "CMAKE_AUTOUIC: ${CMAKE_AUTOUIC}")
-message(STATUS "UI Files found: ${APP_UI_FILES}")
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
@@ -37,12 +32,12 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::PrintSupport
         Qt6::OpenGL
         Qt6::OpenGLWidgets
-        ga_scene
 )
 
 target_include_directories(${PROJECT_NAME}
-    PRIVATE
+    PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    PRIVATE
         "${CMAKE_CURRENT_BINARY_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include_$<CONFIG>"
 )
@@ -52,22 +47,15 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
 )
 
-target_compile_definitions(${PROJECT_NAME}
-    PRIVATE
-        $<$<CONFIG:Debug>:ENABLE_OPENGL_DEBUG=1>
-        $<$<NOT:$<CONFIG:Debug>>:ENABLE_OPENGL_DEBUG=0>
-)
-
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
 
-    source_group("Source Files" FILES main.cpp)
-    source_group("Source Files\\src" FILES ${APP_SOURCES})
-    source_group("Header Files" FILES ${APP_HEADERS})
-    source_group("Form Files" FILES ${APP_UI_FILES})
+    source_group("Source Files" FILES ${SCENE_SOURCES})
+    source_group("Header Files" FILES ${SCENE_HEADERS})
+    source_group("Form Files" FILES ${SCENE_UI_FILES})
 
     source_group("Generated Files" REGULAR_EXPRESSION ".*autogen.*")
     source_group("Generated Files\\moc" REGULAR_EXPRESSION ".*[\\/]+moc_.*\\.(cpp|cxx)$")
     source_group("Generated Files\\ui" REGULAR_EXPRESSION ".*[\\/]+ui_.*\\.(h|hpp)$")
     source_group("Generated Files\\qrc" REGULAR_EXPRESSION ".*[\\/]+qrc_.*\\.(cpp|cxx)$")
-
+    
 endif()

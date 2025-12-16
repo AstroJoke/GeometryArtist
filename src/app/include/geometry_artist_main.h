@@ -6,7 +6,7 @@
 #include <QMainWindow>
 #include <QActionGroup>
 
-#include "ui_geometry_artist_main.h"
+#include "main_window/ui_geometry_artist_main.h"
 
 class QActionGroup;
 class Ui_Geometry_artist_mainwindow;
