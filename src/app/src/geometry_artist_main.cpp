@@ -34,9 +34,8 @@ void geomart::GeometryArtistMain::treatMenu()
 void geomart::GeometryArtistMain::treatAction()
 {
 	actgrpShading_ = new QActionGroup(this);
-	actgrpShading_->addAction(ui_->actionflat_shading);
-	actgrpShading_->addAction(ui_->actiongouraud_shading);
-	ui_->actionflat_shading->setChecked(true);
-
-	ui_->actiondo_boolean->setChecked(true);
+	actgrpShading_->addAction(ui_->actionFlatShading);
+	actgrpShading_->addAction(ui_->actionGouraudShading);
+	ui_->actionFlatShading->setChecked(true);
+	ui_->actionGouraudShading->setChecked(true);
 }

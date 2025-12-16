@@ -26,9 +26,7 @@ find_package(Qt6 REQUIRED COMPONENTS
 )
 
 if(MSVC)
-    add_compile_options(/MP)
-    add_compile_options(/wd4819)
-    add_compile_options(/permissive-)
+    add_compile_options(/MP /wd4819 /permissive-)
     
     set(CMAKE_EXE_LINKER_FLAGS 
         "${CMAKE_EXE_LINKER_FLAGS} /MACHINE:X64 /NODEFAULTLIB:LIBCMT.lib"
@@ -48,29 +46,13 @@ if(MSVC)
     
 endif()
 
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-set(GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
-set(UI_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/ui")
-set(MOC_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/moc")
-
-set(CMAKE_AUTOUIC_OUTPUT_DIRECTORY "${UI_GENERATED_DIR}")
-set(CMAKE_AUTOMOC_OUTPUT_DIRECTORY "${MOC_GENERATED_DIR}")
-set(CMAKE_AUTORCC_OUTPUT_DIRECTORY "${GENERATED_DIR}/qrc")
-
-file(MAKE_DIRECTORY 
-    "${GENERATED_DIR}"
-    "${UI_GENERATED_DIR}"
-    "${MOC_GENERATED_DIR}"
-    "${GENERATED_DIR}/qrc"
-)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
+add_subdirectory(src/scene_core/ga_scene)
 add_subdirectory(src/app)
 
-#add_executable(${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/source/app/src/main.cpp")
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/source/app/)
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT GeometryArtist_Main)
+endif()
