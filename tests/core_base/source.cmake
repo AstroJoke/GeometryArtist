@@ -1,0 +1,1 @@
+set(GA_CORE_BASE_TEST_SOURCES GACoreBaseTests.cpp)

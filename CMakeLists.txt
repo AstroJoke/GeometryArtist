@@ -9,21 +9,27 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Qt 6 settings
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+option(GA_BUILD_APP "Build the existing Qt application" ON)
 
-# find Qt 6
-find_package(Qt6 REQUIRED COMPONENTS
-    Core
-    Xml
-    Gui
-    Widgets
-    OpenGL
-    PrintSupport
-    OpenGLWidgets
-)
+# Core-only validation does not discover Qt.
+if(GA_BUILD_APP)
+    # Qt 6 settings
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_AUTOUIC ON)
+
+    # find Qt 6
+    find_package(Qt6 REQUIRED COMPONENTS
+        Core
+        Xml
+        Gui
+        Widgets
+        OpenGL
+        PrintSupport
+        OpenGLWidgets
+    )
+
+endif()
 
 if(MSVC)
     add_compile_options(/MP /wd4819 /permissive-)
@@ -50,9 +56,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-add_subdirectory(src/scene_core/ga_scene)
-add_subdirectory(src/app)
+include(${CMAKE_CURRENT_SOURCE_DIR}/source.cmake)
+include(CTest)
 
-if(CMAKE_GENERATOR MATCHES "Visual Studio")
+# Foundational targets have no GUI or geometry-kernel dependency.
+add_subdirectory(src/foundation)
+add_subdirectory(src/data)
+add_subdirectory(src/runtime)
+if(BUILD_TESTING)
+    add_subdirectory(tests/core_base)
+endif()
+
+if(GA_BUILD_APP)
+    add_subdirectory(src/scene_core/ga_scene)
+    add_subdirectory(src/app)
+endif()
+
+if(GA_BUILD_APP AND CMAKE_GENERATOR MATCHES "Visual Studio")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT GeometryArtist_Main)
 endif()
