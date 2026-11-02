@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.20)
+
+# An independent consumer can configure this directory without the app.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    project(GACoreBaseConsumer LANGUAGES CXX)
+    include(CTest)
+    set(GA_CORE_BASE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../src" CACHE PATH "GA foundational source root")
+    add_subdirectory("${GA_CORE_BASE_SOURCE_ROOT}/foundation" foundation)
+    add_subdirectory("${GA_CORE_BASE_SOURCE_ROOT}/data" data)
+    add_subdirectory("${GA_CORE_BASE_SOURCE_ROOT}/runtime" runtime)
+endif()
+
+include(${CMAKE_CURRENT_LIST_DIR}/source.cmake)
+add_executable(gaCoreBaseTests ${GA_CORE_BASE_TEST_SOURCES})
+target_compile_features(gaCoreBaseTests PRIVATE cxx_std_20)
+target_link_libraries(gaCoreBaseTests PRIVATE GeometryArtist::DataCore GeometryArtist::ComponentRuntime)
+set_target_properties(gaCoreBaseTests PROPERTIES
+    CXX_EXTENSIONS OFF AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+if(MSVC)
+    target_compile_options(gaCoreBaseTests PRIVATE /utf-8)
+endif()
+if(BUILD_TESTING)
+    foreach(testCase IN ITEMS data mesh components converters)
+        add_test(NAME ga.core_base.${testCase} COMMAND gaCoreBaseTests ${testCase})
+        set_tests_properties(ga.core_base.${testCase} PROPERTIES TIMEOUT 20)
+    endforeach()
+endif()
