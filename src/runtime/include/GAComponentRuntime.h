@@ -54,7 +54,7 @@ public:
 };
 
 /// Thread-safe default implementation of IGAComponentRegistry.
-class GAComponentRegistry final : public IGAComponentRegistry
+class GAComponentRegistry : public IGAComponentRegistry
 {
 public:
     GAComponentRegistry();

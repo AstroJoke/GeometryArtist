@@ -10,8 +10,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(GA_BUILD_APP "Build the existing Qt application" ON)
+option(GA_BUILD_FILE_IO "Build file services and codec plugins" ON)
 
-# Core-only validation does not discover Qt.
+# File IO requires Qt Core for dynamic loading and transactional file output.
+if(GA_BUILD_FILE_IO AND NOT GA_BUILD_APP)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+endif()
+
+# Disable both optional subsystems for a Qt-free core build.
 if(GA_BUILD_APP)
     # Qt 6 settings
     set(CMAKE_AUTOMOC ON)
@@ -63,6 +69,9 @@ include(CTest)
 add_subdirectory(src/foundation)
 add_subdirectory(src/data)
 add_subdirectory(src/runtime)
+if(GA_BUILD_FILE_IO)
+    add_subdirectory(src/adapters/io)
+endif()
 if(BUILD_TESTING)
     add_subdirectory(tests/core_base)
 endif()

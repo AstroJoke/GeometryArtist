@@ -14,7 +14,7 @@
  * callers may release their source buffers immediately after the call returns.
  *
  */
-class GAMeshDataObject final : public GADataObject
+class GAMeshDataObject : public GADataObject
 {
 public:
     explicit GAMeshDataObject(std::string name = std::string());
