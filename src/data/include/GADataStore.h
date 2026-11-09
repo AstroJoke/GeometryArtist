@@ -16,7 +16,7 @@
  * @note Container access is synchronized, but concurrent mutation of the same
  *       GADataObject must be coordinated by its callers.
  */
-class GADataStore final
+class GADataStore
 {
 public:
 

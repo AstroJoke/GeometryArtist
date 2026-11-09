@@ -12,7 +12,7 @@
  * concurrent unregistration.
  *
  */
-class GADataConverterRegistry final
+class GADataConverterRegistry
 {
 public:
     GADataConverterRegistry();

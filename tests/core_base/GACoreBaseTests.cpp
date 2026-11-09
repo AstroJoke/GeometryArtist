@@ -70,7 +70,7 @@ struct Counters
     int created = 0;
     int destroyed = 0;
 };
-class TestFactory final : public IGAComponentFactory
+class TestFactory : public IGAComponentFactory
 {
 public:
     TestFactory(std::shared_ptr<Counters> counters, std::string key = "test.component")
@@ -129,7 +129,7 @@ void componentLifetime()
     require(weak.expired(), "Factory leaked");
 }
 
-class TestConverter final : public IGADataConverter
+class TestConverter : public IGADataConverter
 {
 public:
     const char* converterId() const noexcept override
