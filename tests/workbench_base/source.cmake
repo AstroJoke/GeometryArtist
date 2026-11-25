@@ -1,0 +1,1 @@
+set(GA_ARTIFACT_STORE_TEST_SOURCES GAArtifactStoreTests.cpp)

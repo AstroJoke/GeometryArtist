@@ -1,0 +1,1 @@
+set(GA_FILE_WORKBENCH_TEST_SOURCES GAFileWorkbenchIntegrationTests.cpp)
