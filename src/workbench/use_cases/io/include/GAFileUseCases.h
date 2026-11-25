@@ -8,6 +8,7 @@
 class GADataStore;
 class IGAArtifactRepository;
 class IGAFileReader;
+class IGAFileWriter;
 
 struct GAImportResult
 {
@@ -28,4 +29,18 @@ private:
     IGAFileReader& reader_;
     GADataStore& data_;
     IGAArtifactRepository& artifacts_;
+};
+
+class GAExportUseCase
+{
+public:
+    GAExportUseCase(IGAFileWriter& writer, const GADataStore& data, const IGAArtifactRepository& artifacts) noexcept;
+
+    [[nodiscard]] GAFileResult execute(GAArtifactId artifact, const char* filePath, const char* formatId = nullptr,
+                                       bool binary = false, const char* backendId = nullptr);
+
+private:
+    IGAFileWriter& writer_;
+    const GADataStore& data_;
+    const IGAArtifactRepository& artifacts_;
 };

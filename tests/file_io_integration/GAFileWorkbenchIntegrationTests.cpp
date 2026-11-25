@@ -53,6 +53,45 @@ std::string utf8(const std::filesystem::path& path)
     const auto value = path.u8string();
     return std::string(value.begin(), value.end());
 }
+
+void checkExport(GAFileIOService& service, GADataStore& store, GAArtifactStore& artifacts,
+                 GAArtifactId artifact, const std::filesystem::path& root)
+{
+    GAExportUseCase exporter(service, store, artifacts);
+    const auto off = utf8(root / "mesh.off");
+    check(exporter.execute(artifact, off.c_str()).status == GAFileStatus::Success,
+          "Export by extension with default options");
+
+    const auto output = root / "mesh.output";
+    const auto path = utf8(output);
+    check(exporter.execute(GAInvalidArtifactId, path.c_str()).status == GAFileStatus::InvalidArgument,
+          "Unknown artifact");
+    check(exporter.execute(artifact, "").status == GAFileStatus::InvalidArgument, "Empty output path");
+    check(exporter.execute(artifact, path.c_str(), "mesh.ply", true, "missing-backend").status ==
+              GAFileStatus::FormatNotFound, "Explicit backend must be honored");
+    check(exporter.execute(artifact, path.c_str(), "mesh.obj", true, "cgal").status ==
+              GAFileStatus::Unsupported, "OBJ does not support binary output");
+    check(!std::filesystem::exists(output), "Rejected requests must not create the destination");
+
+    const auto written = exporter.execute(artifact, path.c_str(), "mesh.ply", true, "cgal");
+    check(written.status == GAFileStatus::Success && written.bytesProcessed == std::filesystem::file_size(output),
+          "Explicit PLY format with a custom extension");
+    std::ifstream file(output, std::ios::binary);
+    std::string magic;
+    std::string format;
+    std::getline(file, magic);
+    std::getline(file, format);
+    check(magic.starts_with("ply") && format.starts_with("format binary_"), "Expected a binary PLY header");
+
+    const auto missingDir = utf8(root / "missing" / "mesh.off");
+    check(exporter.execute(artifact, missingDir.c_str()).status == GAFileStatus::OpenFailed,
+          "File open failure must reach the caller");
+
+    check(store.release(artifacts.dataHandle(artifact)), "Release data while retaining its artifact");
+    const auto stale = utf8(root / "stale.off");
+    check(exporter.execute(artifact, stale.c_str()).status == GAFileStatus::InvalidArgument &&
+              !std::filesystem::exists(root / "stale.off"), "Reject artifacts whose data has been released");
+}
 } // namespace
 
 int main(int argc, char** argv)
@@ -128,6 +167,7 @@ int main(int argc, char** argv)
         const auto invalid = invalidImport.execute(request);
         check(invalid.status == GAFileStatus::ParseFailed && invalid.artifact == GAInvalidArtifactId &&
                   artifacts.size() == 1, "Reader success requires a live data handle");
+        checkExport(service, store, artifacts, artifact.artifact, root);
         service.shutdown();
         loader.unload();
         std::cout << "File/Workbench integration passed\n";
