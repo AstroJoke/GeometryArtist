@@ -1,5 +1,8 @@
 #include "GAWorkflowSession.h"
 
+#include <chrono>
+#include <future>
+#include <limits>
 #include <stdexcept>
 
 namespace
@@ -21,6 +24,44 @@ public:
 private:
     GAArtifactId artifact_;
 };
+
+class BlockingTask : public IGATaskNode
+{
+public:
+    bool execute(IGAArtifactRepository&) override
+    {
+        started.set_value();
+        release.get_future().wait();
+        return true;
+    }
+
+    std::promise<void> started;
+    std::promise<void> release;
+};
+
+bool checkWait(IGATaskScheduler& scheduler, GATaskId completed)
+{
+    using namespace std::chrono_literals;
+    BlockingTask task;
+    auto started = task.started.get_future();
+    auto submit = std::async(std::launch::async, [&] { return scheduler.submit(task); });
+    started.wait();
+    const auto start = std::chrono::steady_clock::now();
+    const bool timedOut = !scheduler.waitUntilIdle(10);
+    const bool elapsed = std::chrono::steady_clock::now() - start >= 10ms;
+    const bool pollBusy = !scheduler.waitUntilIdle(0);
+    const bool previousDone = scheduler.wait(completed, 0);
+    const bool unknown = !scheduler.wait(GAInvalidTaskId, 0);
+    auto waiter = std::async(std::launch::async, [&] {
+        return scheduler.waitUntilIdle(std::numeric_limits<std::uint64_t>::max());
+    });
+    const bool stillWaiting = waiter.wait_for(10ms) == std::future_status::timeout;
+    task.release.set_value();
+    const auto id = submit.get();
+    return timedOut && elapsed && pollBusy && previousDone && unknown && stillWaiting && waiter.get() &&
+           scheduler.wait(id, 0) && scheduler.waitUntilIdle(0);
+}
+
 }
 
 int main()
@@ -63,5 +104,5 @@ int main()
     {
         return 1;
     }
-    return scheduler.status(GAInvalidTaskId).id == GAInvalidTaskId ? 0 : 1;
+    return scheduler.status(GAInvalidTaskId).id == GAInvalidTaskId && checkWait(scheduler, completed) ? 0 : 1;
 }

@@ -21,6 +21,9 @@ public:
 
     [[nodiscard]] virtual GATaskId submit(IGATaskNode& node) = 0;
     [[nodiscard]] virtual GATaskStatus status(GATaskId task) const = 0;
+    // A zero timeout polls. Unknown task IDs return false immediately.
+    [[nodiscard]] virtual bool wait(GATaskId task, std::uint64_t timeoutMilliseconds) = 0;
+    [[nodiscard]] virtual bool waitUntilIdle(std::uint64_t timeoutMilliseconds) = 0;
 };
 
 // submit() executes the borrowed node on the calling thread before returning its ID.
@@ -35,6 +38,8 @@ public:
 
     [[nodiscard]] GATaskId submit(IGATaskNode& node) override;
     [[nodiscard]] GATaskStatus status(GATaskId task) const override;
+    [[nodiscard]] bool wait(GATaskId task, std::uint64_t timeoutMilliseconds) override;
+    [[nodiscard]] bool waitUntilIdle(std::uint64_t timeoutMilliseconds) override;
 
 private:
     class Impl;
