@@ -1,1 +1,2 @@
 set(GA_ARTIFACT_STORE_TEST_SOURCES GAArtifactStoreTests.cpp)
+set(GA_INLINE_TASK_TEST_SOURCES GAInlineTaskSchedulerTests.cpp)
