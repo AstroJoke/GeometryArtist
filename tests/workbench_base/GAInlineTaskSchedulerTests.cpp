@@ -1,5 +1,6 @@
 #include "GAWorkflowSession.h"
 
+#include <atomic>
 #include <chrono>
 #include <future>
 #include <limits>
@@ -38,6 +39,61 @@ public:
     std::promise<void> started;
     std::promise<void> release;
 };
+
+class CancellableTask : public IGATaskNode
+{
+public:
+    explicit CancellableTask(bool succeeds) : succeeds_(succeeds) {}
+
+    bool execute(IGAArtifactRepository&) override
+    {
+        started.set_value();
+        cancelEntered.get_future().wait();
+        leaving.set_value();
+        return succeeds_;
+    }
+
+    void cancel() noexcept override
+    {
+        if (++requests == 1)
+        {
+            cancelEntered.set_value();
+            releaseCallback.get_future().wait();
+        }
+    }
+
+    std::promise<void> started;
+    std::promise<void> leaving;
+    std::promise<void> releaseCallback;
+    std::atomic<int> requests{0};
+
+private:
+    std::promise<void> cancelEntered;
+    bool succeeds_;
+};
+
+bool checkCancellation(IGATaskScheduler& scheduler, bool succeeds)
+{
+    using namespace std::chrono_literals;
+    CancellableTask task(succeeds);
+    auto started = task.started.get_future();
+    auto leaving = task.leaving.get_future();
+    auto submitted = std::async(std::launch::async, [&] { return scheduler.submit(task); });
+    started.wait();
+    auto cancelling = std::async(std::launch::async, [&] { scheduler.cancelAll(); });
+    leaving.wait();
+    scheduler.cancelAll();
+    const bool stillBorrowed = submitted.wait_for(10ms) == std::future_status::timeout;
+    const bool stillBusy = !scheduler.waitUntilIdle(0);
+    task.releaseCallback.set_value();
+    cancelling.get();
+    const auto id = submitted.get();
+    scheduler.cancel(id);
+    scheduler.cancel(GAInvalidTaskId);
+    const auto expected = succeeds ? GATaskState::Completed : GATaskState::Cancelled;
+    return stillBorrowed && stillBusy && task.requests == 1 && scheduler.status(id).state == expected &&
+           scheduler.wait(id, 0) && scheduler.waitUntilIdle(0);
+}
 
 bool checkWait(IGATaskScheduler& scheduler, GATaskId completed)
 {
@@ -101,6 +157,10 @@ int main()
         return 1;
     }
     if (threw == GAInvalidTaskId || exception.id != threw || exception.state != GATaskState::Failed)
+    {
+        return 1;
+    }
+    if (!checkCancellation(scheduler, false) || !checkCancellation(scheduler, true))
     {
         return 1;
     }
