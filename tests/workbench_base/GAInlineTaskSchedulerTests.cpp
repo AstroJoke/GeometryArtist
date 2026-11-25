@@ -1,5 +1,4 @@
-#include "GAArtifactStore.h"
-#include "GATaskScheduler.h"
+#include "GAWorkflowSession.h"
 
 #include <stdexcept>
 
@@ -26,11 +25,22 @@ private:
 
 int main()
 {
-    GAArtifactStore artifacts;
+    GAWorkflowSession session;
+    auto& artifacts = session.artifacts();
     const auto artifact = artifacts.create(GAArtifactType::Mesh, "mesh", "model/mesh", 1);
-    GAInlineTaskScheduler scheduler(artifacts);
+    auto& scheduler = session.scheduler();
     LookupTask lookup(artifact);
     const auto completed = scheduler.submit(lookup);
+    GAWorkflowSession other;
+    if (other.artifacts().size() != 0 || other.scheduler().status(completed).id != GAInvalidTaskId)
+    {
+        return 1;
+    }
+    const auto foreignLookup = other.scheduler().submit(lookup);
+    if (other.scheduler().status(foreignLookup).state != GATaskState::Failed)
+    {
+        return 1;
+    }
     if (!artifacts.remove(artifact))
     {
         return 1;
