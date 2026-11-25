@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(GA_BUILD_APP "Build the existing Qt application" ON)
 option(GA_BUILD_FILE_IO "Build file services and codec plugins" ON)
-option(GA_BUILD_WORKBENCH "Build workbench artifact storage" ON)
+option(GA_BUILD_WORKBENCH "Build workbench services" ON)
 
 # File IO requires Qt Core for dynamic loading and transactional file output.
 if(GA_BUILD_FILE_IO AND NOT GA_BUILD_APP)
@@ -80,6 +80,9 @@ if(BUILD_TESTING)
     add_subdirectory(tests/core_base)
     if(GA_BUILD_WORKBENCH)
         add_subdirectory(tests/workbench_base)
+        if(TARGET gaFileMeshCodecs)
+            add_subdirectory(tests/file_io_integration)
+        endif()
     endif()
 endif()
 
