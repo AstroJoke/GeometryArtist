@@ -1,0 +1,12 @@
+include(${CMAKE_CURRENT_LIST_DIR}/source.cmake)
+add_executable(gaArtifactStoreTests ${GA_ARTIFACT_STORE_TEST_SOURCES})
+target_compile_features(gaArtifactStoreTests PRIVATE cxx_std_20)
+target_link_libraries(gaArtifactStoreTests PRIVATE GeometryArtist::WorkbenchRuntime)
+set_target_properties(gaArtifactStoreTests PROPERTIES
+    CXX_EXTENSIONS OFF AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+if(BUILD_TESTING)
+    foreach(testCase IN ITEMS metadata lifetime invalid)
+        add_test(NAME ga.workbench.artifacts.${testCase} COMMAND gaArtifactStoreTests ${testCase})
+        set_tests_properties(ga.workbench.artifacts.${testCase} PROPERTIES TIMEOUT 20 LABELS "workbench;core")
+    endforeach()
+endif()
