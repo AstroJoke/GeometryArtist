@@ -4,6 +4,7 @@
 #include "GADataStore.h"
 #include "IGAArtifactRepository.h"
 #include "IGAFileReader.h"
+#include "IGAFileWriter.h"
 
 namespace
 {
@@ -80,4 +81,27 @@ GAImportResult GAImportUseCase::execute(const GAFileReadRequest& request)
     }
     (void)data_.release(result.data);
     return {GAFileStatus::ParseFailed, GAInvalidArtifactId, "The workbench could not publish the imported data"};
+}
+
+GAExportUseCase::GAExportUseCase(IGAFileWriter& writer, const GADataStore& data,
+                                 const IGAArtifactRepository& artifacts) noexcept
+    : writer_(writer)
+    , data_(data)
+    , artifacts_(artifacts)
+{
+}
+
+GAFileResult GAExportUseCase::execute(GAArtifactId artifact, const char* filePath, const char* formatId, bool binary,
+                                     const char* backendId)
+{
+    if (filePath == nullptr || *filePath == '\0')
+    {
+        return {GAFileStatus::InvalidArgument, GAInvalidDataHandle, 0, "An output path is required"};
+    }
+    const GADataHandle input = artifacts_.dataHandle(artifact);
+    if (!data_.contains(input))
+    {
+        return {GAFileStatus::InvalidArgument, GAInvalidDataHandle, 0, "The artifact has no available data"};
+    }
+    return writer_.write(GAFileWriteRequest{filePath, formatId, input, binary, backendId}, data_);
 }

@@ -10,3 +10,11 @@ if(BUILD_TESTING)
         set_tests_properties(ga.workbench.artifacts.${testCase} PROPERTIES TIMEOUT 20 LABELS "workbench;core")
     endforeach()
 endif()
+
+add_executable(gaInlineTaskSchedulerTests ${GA_INLINE_TASK_TEST_SOURCES})
+find_package(Threads REQUIRED)
+target_link_libraries(gaInlineTaskSchedulerTests PRIVATE GeometryArtist::WorkbenchRuntime Threads::Threads)
+set_target_properties(gaInlineTaskSchedulerTests PROPERTIES
+    CXX_EXTENSIONS OFF AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+add_test(NAME ga.workbench.inline_tasks COMMAND gaInlineTaskSchedulerTests)
+set_tests_properties(ga.workbench.inline_tasks PROPERTIES TIMEOUT 20)

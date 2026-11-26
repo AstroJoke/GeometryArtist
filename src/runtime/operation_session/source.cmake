@@ -1,0 +1,9 @@
+set(GA_OPERATION_SESSION_HEADERS
+    include/GATaskQueue.h
+)
+set(GA_OPERATION_SESSION_SOURCES
+    src/GATaskQueue.cpp
+)
+set(GA_OPERATION_SESSION_TEST_SOURCES
+    tests/GAOperationSessionTests.cpp
+)
