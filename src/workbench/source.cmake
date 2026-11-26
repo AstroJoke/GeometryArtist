@@ -12,6 +12,13 @@ set(GA_WORKBENCH_SOURCES
 )
 
 if(GA_BUILD_FILE_IO)
-    list(APPEND GA_WORKBENCH_PUBLIC_HEADERS use_cases/io/include/GAFileUseCases.h)
-    list(APPEND GA_WORKBENCH_SOURCES use_cases/io/src/GAFileUseCases.cpp)
+    list(APPEND GA_WORKBENCH_PUBLIC_HEADERS
+        use_cases/io/include/GAFileUseCases.h
+        ui/include/GAWorkbenchController.h
+        ui/include/IGAWorkbenchView.h
+    )
+    list(APPEND GA_WORKBENCH_SOURCES
+        use_cases/io/src/GAFileUseCases.cpp
+        ui/src/GAWorkbenchController.cpp
+    )
 endif()

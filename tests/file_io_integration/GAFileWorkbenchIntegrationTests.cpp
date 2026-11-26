@@ -3,6 +3,8 @@
 #include "GAFileIOService.h"
 #include "GAFilePluginLoader.h"
 #include "GAFileUseCases.h"
+#include "GAWorkbenchController.h"
+#include "IGAWorkbenchView.h"
 #include "IGAFileReader.h"
 #include "GAMeshDataObject.h"
 
@@ -52,6 +54,43 @@ std::string utf8(const std::filesystem::path& path)
 {
     const auto value = path.u8string();
     return std::string(value.begin(), value.end());
+}
+
+class DocumentView : public IGAWorkbenchView
+{
+public:
+    void setActiveArtifact(GAArtifactId id) override { active = id; }
+    void showStatus(const char* text) override { status = text; }
+    void showError(const char* text) override { error = text; }
+
+    GAArtifactId active = GAInvalidArtifactId;
+    std::string status, error;
+};
+
+void checkDocumentCommands(GAFileIOService& files, const std::string& input, const std::filesystem::path& root)
+{
+    GADataStore data;
+    GAArtifactStore artifacts;
+    GAImportUseCase importer(files, data, artifacts);
+    GAExportUseCase exporter(files, data, artifacts);
+    DocumentView view;
+    GAWorkbenchController controller(importer, exporter, view);
+    check(controller.openDocument(input.c_str()) && data.contains(artifacts.dataHandle(view.active)) &&
+              !view.status.empty(), "Opening a mesh selects the published artifact");
+    const auto selected = view.active;
+    GAFileReadRequest request{input.c_str(), "mesh.obj"};
+    request.backendId = "missing-backend";
+    check(!controller.openDocument(request) && !view.error.empty() && view.active == selected && artifacts.size() == 1,
+          "A failed open reports the error and keeps the selection");
+
+    const auto output = root / "document.output";
+    const auto path = utf8(output);
+    view.error.clear();
+    check(!controller.saveDocument(selected, path.c_str(), "mesh.ply", true, "missing-backend") &&
+              !view.error.empty() && !std::filesystem::exists(output), "Saving honors backend selection");
+    view.status.clear();
+    check(controller.saveDocument(selected, path.c_str(), "mesh.ply", true, "cgal") &&
+              std::filesystem::file_size(output) > 0 && !view.status.empty(), "Saving reports a successful export");
 }
 
 void checkExport(GAFileIOService& service, GADataStore& store, GAArtifactStore& artifacts,
@@ -167,6 +206,7 @@ int main(int argc, char** argv)
         const auto invalid = invalidImport.execute(request);
         check(invalid.status == GAFileStatus::ParseFailed && invalid.artifact == GAInvalidArtifactId &&
                   artifacts.size() == 1, "Reader success requires a live data handle");
+        checkDocumentCommands(service, inputName, root);
         checkExport(service, store, artifacts, artifact.artifact, root);
         service.shutdown();
         loader.unload();
