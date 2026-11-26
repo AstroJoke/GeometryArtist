@@ -1,7 +1,9 @@
 #include <GATaskQueue.h>
 #include <atomic>
+#include <chrono>
 #include <iostream>
 #include <latch>
+#include <semaphore>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -11,8 +13,28 @@ void require(bool ok)
     if (!ok)
         throw std::runtime_error("Session contract failed");
 }
+void eventDrivenQueue()
+{
+    using namespace std::chrono_literals;
+    std::counting_semaphore<> notifications(0);
+    TaskQueue queue({}, [&] { notifications.release(); });
+    std::vector<StepStatus> outcomes;
+    auto complete = [&](const StepCompletion& result) { outcomes.push_back(result.status); };
+    require(queue.submit({[] { throw std::runtime_error("prepare"); }, [] {}, complete}).has_value());
+    require(queue.submit({{}, [] { throw std::runtime_error("compute"); }, complete}).has_value());
+    require(queue.submit({{}, [] {}, complete}).has_value());
+    while (queue.pending())
+    {
+        require(notifications.try_acquire_for(5s));
+        while (notifications.try_acquire()) {}
+        require(queue.poll());
+    }
+    require(outcomes == std::vector<StepStatus>{StepStatus::Failed, StepStatus::Failed, StepStatus::Published});
+}
+
 int main()
 {
+    eventDrivenQueue();
     TaskQueue session({2});
     std::latch entered(1), release(1);
     const auto owner = std::this_thread::get_id();

@@ -30,6 +30,9 @@ struct StepCompletion
     StepStatus status;
     std::exception_ptr error;
 };
+// Called on the owner or worker thread. Post an event and return without re-entering the queue.
+using Wakeup = std::function<void()>;
+
 struct Operation
 {
     // prepare and complete run on the owner thread. compute works on private data.
@@ -41,7 +44,7 @@ struct Operation
 class TaskQueue
 {
 public:
-    explicit TaskQueue(SessionPolicy policy = {});
+    explicit TaskQueue(SessionPolicy policy = {}, Wakeup wakeup = {});
     ~TaskQueue();
     TaskQueue(const TaskQueue&) = delete;
     TaskQueue& operator=(const TaskQueue&) = delete;
@@ -68,10 +71,13 @@ private:
         StepTicket ticket;
         Operation operation;
     };
+    void notify() const noexcept;
+    Wakeup wakeup_;
     SessionPolicy policy_;
     std::uint64_t generation_ = 1, nextId_ = 1;
     std::deque<Entry> queue_;
     std::optional<Entry> active_;
     std::future<void> result_;
+    std::future<void> worker_;
 };
 } // namespace ga::session

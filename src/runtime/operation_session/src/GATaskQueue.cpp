@@ -5,14 +5,32 @@
 #include <utility>
 namespace ga::session
 {
-TaskQueue::TaskQueue(SessionPolicy policy)
-    : policy_(policy)
+TaskQueue::TaskQueue(SessionPolicy policy, Wakeup wakeup)
+    : wakeup_(std::move(wakeup))
+    , policy_(policy)
 {
     if (!policy.pendingLimit)
         throw std::invalid_argument("Session capacity must be positive");
 }
 
-TaskQueue::~TaskQueue() = default;
+TaskQueue::~TaskQueue()
+{
+    if (worker_.valid())
+        worker_.wait();
+}
+
+void TaskQueue::notify() const noexcept
+{
+    try
+    {
+        if (wakeup_)
+            wakeup_();
+    }
+    catch (...)
+    {
+        // A notification failure does not change the operation result.
+    }
+}
 
 std::optional<StepTicket> TaskQueue::submit(Operation operation)
 {
@@ -24,6 +42,7 @@ std::optional<StepTicket> TaskQueue::submit(Operation operation)
         throw std::overflow_error("Step ID exhausted");
     const StepTicket ticket{generation_, nextId_++};
     queue_.push_back({ticket, std::move(operation)});
+    notify();
     return ticket;
 }
 bool TaskQueue::poll()
@@ -41,12 +60,15 @@ bool TaskQueue::poll()
         {
             error = std::current_exception();
         }
+        worker_.get();
         auto entry = std::move(*active_);
         active_.reset();
         auto status = error ? StepStatus::Failed : StepStatus::Published;
         if (entry.ticket.generation != generation_)
             status = StepStatus::Cancelled;
         entry.operation.complete({entry.ticket, status, error});
+        if (!queue_.empty())
+            notify();
         return true;
     }
     if (queue_.empty())
@@ -57,20 +79,28 @@ bool TaskQueue::poll()
     {
         if (active_->operation.prepare)
             active_->operation.prepare();
-        result_ = std::async(std::launch::async, std::move(active_->operation.compute));
+        std::packaged_task<void()> compute(std::move(active_->operation.compute));
+        result_ = compute.get_future();
+        worker_ = std::async(std::launch::async, [this, compute = std::move(compute)]() mutable
+        {
+            compute(); // Makes the result or exception available before waking the owner.
+            notify();
+        });
     }
     catch (...)
     {
         auto entry = std::move(*active_);
         active_.reset();
         entry.operation.complete({entry.ticket, StepStatus::Failed, std::current_exception()});
+        if (!queue_.empty())
+            notify();
     }
     return true;
 }
 void TaskQueue::wait()
 {
-    if (result_.valid())
-        result_.wait();
+    if (worker_.valid())
+        worker_.wait();
 }
 void TaskQueue::cancel()
 {
@@ -83,5 +113,7 @@ void TaskQueue::cancel()
     {
         entry.operation.complete({entry.ticket, StepStatus::Cancelled, {}});
     }
+    if (!cancelled.empty())
+        notify();
 }
 } // namespace ga::session
