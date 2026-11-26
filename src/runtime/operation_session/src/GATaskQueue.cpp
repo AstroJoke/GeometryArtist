@@ -41,7 +41,7 @@ std::optional<StepTicket> TaskQueue::submit(Operation operation)
     if (nextId_ == std::numeric_limits<std::uint64_t>::max())
         throw std::overflow_error("Step ID exhausted");
     const StepTicket ticket{generation_, nextId_++};
-    queue_.push_back({ticket, std::move(operation)});
+    queue_.push_back({ticket, std::move(operation), {StepClock::now()}});
     notify();
     return ticket;
 }
@@ -66,7 +66,8 @@ bool TaskQueue::poll()
         auto status = error ? StepStatus::Failed : StepStatus::Published;
         if (entry.ticket.generation != generation_)
             status = StepStatus::Cancelled;
-        entry.operation.complete({entry.ticket, status, error});
+        entry.timeline.publishStarted = StepClock::now();
+        entry.operation.complete({entry.ticket, status, error, entry.timeline});
         if (!queue_.empty())
             notify();
         return true;
@@ -75,17 +76,31 @@ bool TaskQueue::poll()
         return false;
     active_ = std::move(queue_.front());
     queue_.pop_front();
+    active_->timeline.prepareStarted = StepClock::now();
     try
     {
         if (active_->operation.prepare)
             active_->operation.prepare();
+        active_->timeline.prepared = StepClock::now();
         auto& operation = active_->operation;
-        std::packaged_task<void()> run([prepare = std::move(operation.prepareBackground),
+        // The worker owns these timestamps until poll() joins it and consumes the entry.
+        std::packaged_task<void()> run([&timeline = active_->timeline, prepare = std::move(operation.prepareBackground),
                                         compute = std::move(operation.compute)]
         {
+            timeline.computeStarted = StepClock::now();
             if (prepare)
                 prepare();
-            compute();
+            timeline.backgroundPrepared = StepClock::now();
+            try
+            {
+                compute();
+            }
+            catch (...)
+            {
+                timeline.computed = StepClock::now();
+                throw;
+            }
+            timeline.computed = StepClock::now();
         });
         result_ = run.get_future();
         worker_ = std::async(std::launch::async, [this, run = std::move(run)]() mutable
@@ -98,7 +113,8 @@ bool TaskQueue::poll()
     {
         auto entry = std::move(*active_);
         active_.reset();
-        entry.operation.complete({entry.ticket, StepStatus::Failed, std::current_exception()});
+        entry.timeline.publishStarted = StepClock::now();
+        entry.operation.complete({entry.ticket, StepStatus::Failed, std::current_exception(), entry.timeline});
         if (!queue_.empty())
             notify();
     }
@@ -118,7 +134,8 @@ void TaskQueue::cancel()
     queue_.clear();
     for (auto& entry : cancelled)
     {
-        entry.operation.complete({entry.ticket, StepStatus::Cancelled, {}});
+        entry.timeline.publishStarted = StepClock::now();
+        entry.operation.complete({entry.ticket, StepStatus::Cancelled, {}, entry.timeline});
     }
     if (!cancelled.empty())
         notify();

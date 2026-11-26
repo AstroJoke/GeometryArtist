@@ -33,6 +33,11 @@ void backgroundPreparation()
     step.complete = [&](const StepCompletion& result)
     {
         require(std::this_thread::get_id() == owner && result.status == StepStatus::Published);
+        const auto& t = result.timeline;
+        require(t.prepareStarted && t.prepared && t.computeStarted && t.backgroundPrepared && t.computed && t.publishStarted);
+        require(t.submitted <= *t.prepareStarted && *t.prepareStarted <= *t.prepared &&
+                *t.prepared <= *t.computeStarted && *t.computeStarted <= *t.backgroundPrepared &&
+                *t.backgroundPrepared <= *t.computed && *t.computed <= *t.publishStarted);
         published = true;
     };
     require(queue.submit(std::move(step)).has_value());
@@ -47,7 +52,12 @@ void eventDrivenQueue()
     std::counting_semaphore<> notifications(0);
     TaskQueue queue({}, [&] { notifications.release(); });
     std::vector<StepStatus> outcomes;
-    auto complete = [&](const StepCompletion& result) { outcomes.push_back(result.status); };
+    std::vector<StepTimeline> timelines;
+    auto complete = [&](const StepCompletion& result)
+    {
+        outcomes.push_back(result.status);
+        timelines.push_back(result.timeline);
+    };
     require(queue.submit({[] { throw std::runtime_error("prepare"); }, [] {}, complete}).has_value());
     require(queue.submit({{}, [] { throw std::runtime_error("compute"); }, complete}).has_value());
     bool ranAfterFailedPreparation = false;
@@ -63,6 +73,14 @@ void eventDrivenQueue()
     require(!ranAfterFailedPreparation);
     require(outcomes == std::vector<StepStatus>{StepStatus::Failed, StepStatus::Failed, StepStatus::Failed,
                                                 StepStatus::Published});
+    const auto& ownerFailure = timelines[0];
+    require(ownerFailure.prepareStarted && !ownerFailure.prepared && !ownerFailure.computeStarted &&
+            ownerFailure.publishStarted);
+    const auto& computeFailure = timelines[1];
+    require(computeFailure.backgroundPrepared && computeFailure.computed && computeFailure.publishStarted);
+    const auto& backgroundFailure = timelines[2];
+    require(backgroundFailure.computeStarted && !backgroundFailure.backgroundPrepared &&
+            !backgroundFailure.computed && backgroundFailure.publishStarted);
 }
 
 int main()
@@ -157,6 +175,8 @@ int main()
                     },
                     [&](auto done)
                     {
+                        require(!done.timeline.prepareStarted && !done.timeline.computeStarted &&
+                                !done.timeline.computed && done.timeline.publishStarted);
                         statuses.push_back(done.status);
                     }});
     session.cancel();

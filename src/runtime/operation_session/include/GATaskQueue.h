@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -24,11 +25,21 @@ enum class StepStatus
     Failed,
     Cancelled
 };
+using StepClock = std::chrono::steady_clock;
+struct StepTimeline
+{
+    StepClock::time_point submitted;
+    std::optional<StepClock::time_point> prepareStarted, prepared;
+    // Worker entry, ready to call compute, and exit from compute (including exceptions).
+    std::optional<StepClock::time_point> computeStarted, backgroundPrepared, computed;
+    std::optional<StepClock::time_point> publishStarted;
+};
 struct StepCompletion
 {
     StepTicket ticket;
     StepStatus status;
     std::exception_ptr error;
+    StepTimeline timeline;
 };
 // Called on the owner or worker thread. Post an event and return without re-entering the queue.
 using Wakeup = std::function<void()>;
@@ -72,6 +83,7 @@ private:
     {
         StepTicket ticket;
         Operation operation;
+        StepTimeline timeline;
     };
     void notify() const noexcept;
     Wakeup wakeup_;
