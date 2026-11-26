@@ -6,6 +6,7 @@
 #include <semaphore>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 #include <vector>
 using namespace ga::session;
 void require(bool ok)
@@ -13,6 +14,33 @@ void require(bool ok)
     if (!ok)
         throw std::runtime_error("Session contract failed");
 }
+void backgroundPreparation()
+{
+    const auto owner = std::this_thread::get_id();
+    std::thread::id preparedOn;
+    bool preparedOnOwner = false;
+    bool published = false;
+    TaskQueue queue;
+    Operation step;
+    step.prepare = [&] { preparedOnOwner = std::this_thread::get_id() == owner; };
+    step.prepareBackground = [&]
+    {
+        require(preparedOnOwner);
+        preparedOn = std::this_thread::get_id();
+        require(preparedOn != owner);
+    };
+    step.compute = [&] { require(std::this_thread::get_id() == preparedOn); };
+    step.complete = [&](const StepCompletion& result)
+    {
+        require(std::this_thread::get_id() == owner && result.status == StepStatus::Published);
+        published = true;
+    };
+    require(queue.submit(std::move(step)).has_value());
+    require(queue.poll());
+    queue.wait();
+    require(!published && queue.poll() && published);
+}
+
 void eventDrivenQueue()
 {
     using namespace std::chrono_literals;
@@ -22,6 +50,9 @@ void eventDrivenQueue()
     auto complete = [&](const StepCompletion& result) { outcomes.push_back(result.status); };
     require(queue.submit({[] { throw std::runtime_error("prepare"); }, [] {}, complete}).has_value());
     require(queue.submit({{}, [] { throw std::runtime_error("compute"); }, complete}).has_value());
+    bool ranAfterFailedPreparation = false;
+    require(queue.submit({{}, [&] { ranAfterFailedPreparation = true; }, complete,
+                          [] { throw std::runtime_error("background prepare"); }}).has_value());
     require(queue.submit({{}, [] {}, complete}).has_value());
     while (queue.pending())
     {
@@ -29,11 +60,14 @@ void eventDrivenQueue()
         while (notifications.try_acquire()) {}
         require(queue.poll());
     }
-    require(outcomes == std::vector<StepStatus>{StepStatus::Failed, StepStatus::Failed, StepStatus::Published});
+    require(!ranAfterFailedPreparation);
+    require(outcomes == std::vector<StepStatus>{StepStatus::Failed, StepStatus::Failed, StepStatus::Failed,
+                                                StepStatus::Published});
 }
 
 int main()
 {
+    backgroundPreparation();
     eventDrivenQueue();
     TaskQueue session({2});
     std::latch entered(1), release(1);

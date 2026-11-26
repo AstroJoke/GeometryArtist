@@ -79,11 +79,18 @@ bool TaskQueue::poll()
     {
         if (active_->operation.prepare)
             active_->operation.prepare();
-        std::packaged_task<void()> compute(std::move(active_->operation.compute));
-        result_ = compute.get_future();
-        worker_ = std::async(std::launch::async, [this, compute = std::move(compute)]() mutable
+        auto& operation = active_->operation;
+        std::packaged_task<void()> run([prepare = std::move(operation.prepareBackground),
+                                        compute = std::move(operation.compute)]
         {
-            compute(); // Makes the result or exception available before waking the owner.
+            if (prepare)
+                prepare();
+            compute();
+        });
+        result_ = run.get_future();
+        worker_ = std::async(std::launch::async, [this, run = std::move(run)]() mutable
+        {
+            run(); // Makes the result or exception available before waking the owner.
             notify();
         });
     }

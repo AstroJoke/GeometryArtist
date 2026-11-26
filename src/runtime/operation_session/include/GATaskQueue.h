@@ -38,6 +38,8 @@ struct Operation
     // prepare and complete run on the owner thread. compute works on private data.
     std::function<void()> prepare, compute;
     std::function<void(const StepCompletion&)> complete;
+    // Runs on the compute thread before compute(), using the step's private snapshot.
+    std::function<void()> prepareBackground{};
 };
 // Call session methods on the owner thread, outside operation callbacks.
 // Finish publishing one step before preparing the next queued step.
