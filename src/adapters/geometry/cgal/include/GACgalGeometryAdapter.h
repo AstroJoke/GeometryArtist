@@ -35,6 +35,8 @@ public:
     [[nodiscard]] GAGeometryResult createTransformed(GAGeometryHandle geometry, const GATransform& transform) override;
     [[nodiscard]] GAGeometryResult computeHull(const GAGeometryHandle* geometries, std::size_t count,
                                                const GAGeometryOptions& options = {}) override;
+    // The destination owns the copy. The source handle only needs to remain valid during the call.
+    [[nodiscard]] GAGeometryResult copyGeometryFrom(const GACgalGeometryAdapter& source, GAGeometryHandle geometry);
     [[nodiscard]] std::size_t resourceCount() const noexcept;
 
 private:

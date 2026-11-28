@@ -38,3 +38,16 @@ if(BUILD_TESTING)
     add_test(NAME ga.geometry.cgal_operators COMMAND gaCgalGeometryOperatorTests)
     set_tests_properties(ga.geometry.cgal_operators PROPERTIES TIMEOUT 120)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(gaCgalGeometryCopyTests ${GA_CGAL_GEOMETRY_COPY_TEST_SOURCES})
+    target_link_libraries(gaCgalGeometryCopyTests PRIVATE GeometryArtist::CgalGeometry Threads::Threads)
+    set_target_properties(gaCgalGeometryCopyTests PROPERTIES
+        CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+    if(MSVC)
+        target_compile_options(gaCgalGeometryCopyTests PRIVATE /utf-8)
+    endif()
+    add_test(NAME ga.geometry.cgal_copies COMMAND gaCgalGeometryCopyTests)
+    set_tests_properties(ga.geometry.cgal_copies PROPERTIES TIMEOUT 120)
+endif()
