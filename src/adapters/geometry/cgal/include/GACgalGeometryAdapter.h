@@ -40,6 +40,7 @@ public:
     [[nodiscard]] std::size_t resourceCount() const noexcept;
 
 private:
+    friend class GACgalCoordinateAdapter;
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

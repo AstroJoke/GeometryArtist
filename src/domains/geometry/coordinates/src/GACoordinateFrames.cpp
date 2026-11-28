@@ -104,7 +104,33 @@ RigidPose FrameTransformSnapshot::approximatePose() const
 {
     RigidPose result;
     for (const auto& step : steps)
-        result = compose(step.inverted ? inverse(step.localToParent) : step.localToParent, result);
+    {
+        auto pose = step.localToParent;
+        // Approximation for display only; exact adapters independently form rational coefficients.
+        const auto roundInput = [](double value, std::uint32_t denominator)
+        {
+            if (!denominator)
+                return value;
+            constexpr double MaximumExactDoubleInteger = 9'007'199'254'740'991.0;
+            const double scaled = value * denominator;
+            if (!std::isfinite(scaled) || std::abs(scaled) > MaximumExactDoubleInteger)
+                throw std::invalid_argument("Input exceeds the supported quantization range");
+            return std::round(scaled) / denominator;
+        };
+        auto& t = pose.translation;
+        t = {roundInput(t.x, step.precision.translationDenominator),
+             roundInput(t.y, step.precision.translationDenominator),
+             roundInput(t.z, step.precision.translationDenominator)};
+        if (step.precision.quaternionDenominator)
+        {
+            auto q = normalized(pose.rotation);
+            pose.rotation = normalized({roundInput(q.x, step.precision.quaternionDenominator),
+                                        roundInput(q.y, step.precision.quaternionDenominator),
+                                        roundInput(q.z, step.precision.quaternionDenominator),
+                                        roundInput(q.w, step.precision.quaternionDenominator)});
+        }
+        result = compose(step.inverted ? inverse(pose) : pose, result);
+    }
     return result;
 }
 FrameGraph::FrameGraph(LengthUnit unit)

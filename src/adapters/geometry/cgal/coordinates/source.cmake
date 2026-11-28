@@ -1,0 +1,4 @@
+set(GA_CGAL_COORDINATE_PUBLIC_HEADERS include/GACgalCoordinateAdapter.h)
+set(GA_CGAL_COORDINATE_SOURCES src/GACgalCoordinateAdapter.cpp)
+set(GA_CGAL_COORDINATE_TEST_SOURCES tests/GACgalCoordinateAdapterTests.cpp)
+set(GA_CGAL_COORDINATE_PRIVATE_HEADERS src/GACgalCoordinateInternal.h)

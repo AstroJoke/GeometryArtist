@@ -42,10 +42,19 @@ RigidPose inverse(const RigidPose& pose);
 Vector3 transformPoint(const RigidPose& pose, Vector3 point);
 Vector3 convertLength(Vector3 value, LengthUnit from, LengthUnit to);
 
+// Precision belongs to each original edge, so inverse paths keep the same rational transform.
+struct PoseInputPrecision
+{
+    std::uint32_t translationDenominator = 0;
+    // Nonzero: normalize the input quaternion in double, round its components, then divide by its exact norm.
+    std::uint32_t quaternionDenominator = 0;
+    friend bool operator==(PoseInputPrecision, PoseInputPrecision) = default;
+};
 struct TransformStep
 {
     RigidPose localToParent;
     bool inverted = false;
+    PoseInputPrecision precision;
 };
 struct FrameTransformSnapshot
 {
