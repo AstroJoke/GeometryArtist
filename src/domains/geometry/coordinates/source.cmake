@@ -1,0 +1,9 @@
+set(GA_COORDINATE_PUBLIC_HEADERS
+    "${CMAKE_CURRENT_LIST_DIR}/include/GACoordinateFrames.h"
+)
+set(GA_COORDINATE_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/GACoordinateFrames.cpp"
+)
+set(GA_COORDINATE_TEST_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/tests/GACoordinateFramesTests.cpp"
+)
