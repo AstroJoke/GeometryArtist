@@ -18,3 +18,9 @@ set_target_properties(gaInlineTaskSchedulerTests PROPERTIES
     CXX_EXTENSIONS OFF AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
 add_test(NAME ga.workbench.inline_tasks COMMAND gaInlineTaskSchedulerTests)
 set_tests_properties(ga.workbench.inline_tasks PROPERTIES TIMEOUT 20)
+
+add_executable(gaBooleanUseCaseTests ${GA_BOOLEAN_USE_CASE_TEST_SOURCES})
+target_link_libraries(gaBooleanUseCaseTests PRIVATE GeometryArtist::WorkbenchRuntime)
+set_target_properties(gaBooleanUseCaseTests PROPERTIES
+    CXX_EXTENSIONS OFF AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+add_test(NAME ga.workbench.boolean_use_case COMMAND gaBooleanUseCaseTests)
