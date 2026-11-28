@@ -1,0 +1,1 @@
+set(GA_CGAL_USE_CASE_TEST_SOURCES GACgalBooleanUseCaseTests.cpp)

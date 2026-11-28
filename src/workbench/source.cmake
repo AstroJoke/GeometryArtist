@@ -1,17 +1,26 @@
 set(GA_WORKBENCH_PUBLIC_HEADERS
     include/GAWorkbenchTypes.h
+    use_cases/geometry/include/GABooleanUseCase.h
     workflow/include/IGAArtifactRepository.h
     workflow/include/GAWorkflowSession.h
     workflow/include/GATaskScheduler.h
     workflow/include/GAArtifactStore.h
 )
 set(GA_WORKBENCH_SOURCES
+    use_cases/geometry/src/GABooleanUseCase.cpp
     workflow/src/GAWorkflowSession.cpp
     workflow/src/GATaskScheduler.cpp
     workflow/src/GAArtifactStore.cpp
 )
 
 if(GA_BUILD_FILE_IO)
-    list(APPEND GA_WORKBENCH_PUBLIC_HEADERS use_cases/io/include/GAFileUseCases.h)
-    list(APPEND GA_WORKBENCH_SOURCES use_cases/io/src/GAFileUseCases.cpp)
+    list(APPEND GA_WORKBENCH_PUBLIC_HEADERS
+        use_cases/io/include/GAFileUseCases.h
+        ui/include/GAWorkbenchController.h
+        ui/include/IGAWorkbenchView.h
+    )
+    list(APPEND GA_WORKBENCH_SOURCES
+        use_cases/io/src/GAFileUseCases.cpp
+        ui/src/GAWorkbenchController.cpp
+    )
 endif()
