@@ -2,13 +2,18 @@
 
 #include "GAGeometryInputPrecision.h"
 #include "IGABooleanOperator.h"
+#include "IGAConvexHullOperator.h"
 #include "IGAGeometryResource.h"
+#include "IGATransformOperator.h"
 
 #include <cstddef>
 #include <memory>
 
-// Operations borrow inputs and publish independent exact geometry handles.
-class GACgalGeometryAdapter : public IGAGeometryResource, public IGABooleanOperator
+// Owns the exact solids referenced by this adapter's handles.
+class GACgalGeometryAdapter : public IGAGeometryResource,
+                              public IGABooleanOperator,
+                              public IGATransformOperator,
+                              public IGAConvexHullOperator
 {
 public:
     explicit GACgalGeometryAdapter(GAGeometryInputPrecision policy = {});
@@ -25,6 +30,11 @@ public:
     [[nodiscard]] GAGeometryRepresentation representation(GAGeometryHandle geometry) const noexcept override;
     [[nodiscard]] GAGeometryResult apply(GABooleanOperation operation, GAGeometryHandle left, GAGeometryHandle right,
                                          const GAGeometryOptions& options = {}) override;
+    // Row-major matrix on column vectors; x'=m0*x+m1*y+m2*z+m3. Nonsingular affine transforms only.
+    [[nodiscard]] GAGeometryStatus transform(GAGeometryHandle geometry, const GATransform& transform) override;
+    [[nodiscard]] GAGeometryResult createTransformed(GAGeometryHandle geometry, const GATransform& transform) override;
+    [[nodiscard]] GAGeometryResult computeHull(const GAGeometryHandle* geometries, std::size_t count,
+                                               const GAGeometryOptions& options = {}) override;
     [[nodiscard]] std::size_t resourceCount() const noexcept;
 
 private:

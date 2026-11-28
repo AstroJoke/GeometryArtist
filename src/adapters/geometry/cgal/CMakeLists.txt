@@ -25,3 +25,16 @@ if(BUILD_TESTING)
     add_test(NAME ga.geometry.cgal COMMAND gaCgalGeometryTests)
     set_tests_properties(ga.geometry.cgal PROPERTIES TIMEOUT 120)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(gaCgalGeometryOperatorTests ${GA_CGAL_GEOMETRY_OPERATOR_TEST_SOURCES})
+    target_link_libraries(gaCgalGeometryOperatorTests PRIVATE GeometryArtist::CgalGeometry)
+    set_target_properties(gaCgalGeometryOperatorTests PROPERTIES
+        CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+    if(MSVC)
+        target_compile_options(gaCgalGeometryOperatorTests PRIVATE /utf-8)
+    endif()
+    add_test(NAME ga.geometry.cgal_operators COMMAND gaCgalGeometryOperatorTests)
+    set_tests_properties(ga.geometry.cgal_operators PROPERTIES TIMEOUT 120)
+endif()

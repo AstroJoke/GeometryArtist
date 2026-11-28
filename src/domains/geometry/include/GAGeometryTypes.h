@@ -61,3 +61,9 @@ struct GAGeometryResult
     GAGeometryHandle output = GAInvalidGeometryHandle;
     const char* message = nullptr;
 };
+
+/// Column/row convention must be defined by the concrete kernel adapter.
+struct GATransform
+{
+    double values[16] = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+};

@@ -1,4 +1,5 @@
 set(GA_CGAL_GEOMETRY_PUBLIC_HEADERS include/GACgalGeometryAdapter.h include/GACgalInputPrecision.h)
 set(GA_CGAL_GEOMETRY_PRIVATE_HEADERS src/GACgalGeometryInternal.h)
-set(GA_CGAL_GEOMETRY_SOURCES src/GACgalGeometryAdapter.cpp)
+set(GA_CGAL_GEOMETRY_SOURCES src/GACgalGeometryAdapter.cpp src/GACgalGeometryOperators.cpp)
 set(GA_CGAL_GEOMETRY_TEST_SOURCES tests/GACgalGeometryAdapterTests.cpp tests/GACgalGeometryTestMeshes.h)
+set(GA_CGAL_GEOMETRY_OPERATOR_TEST_SOURCES tests/GACgalGeometryOperatorTests.cpp tests/GACgalGeometryTestMeshes.h)
