@@ -1,8 +1,10 @@
 set(GA_COORDINATE_PUBLIC_HEADERS
     "${CMAKE_CURRENT_LIST_DIR}/include/GACoordinateFrames.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/GAPoseSampling.h"
 )
 set(GA_COORDINATE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/GACoordinateFrames.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/GAPoseSampling.cpp"
 )
 set(GA_COORDINATE_TEST_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/tests/GACoordinateFramesTests.cpp"
